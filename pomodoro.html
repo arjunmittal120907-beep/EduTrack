@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pomodoro – Study Planner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-link">📚 Planner</a>
+  <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+  <a href="timetable.html" class="nav-link">📅 Timetable</a>
+  <a href="pomodoro.html" class="nav-link active">⏱️ Pomodoro</a>
+  <a href="report.html" class="nav-link">📄 My Report</a>
+</nav>
+
+<div class="container">
+  <h1>⏱️ Pomodoro Timer</h1>
+
+  <div class="pomodoro-card">
+    <div class="pomo-mode-btns">
+      <button class="pomo-mode active" onclick="setMode('focus')">Focus 25m</button>
+      <button class="pomo-mode" onclick="setMode('short')">Short Break 5m</button>
+      <button class="pomo-mode" onclick="setMode('long')">Long Break 15m</button>
+    </div>
+
+    <div class="pomo-timer" id="pomo-display">25:00</div>
+    <div class="pomo-label" id="pomo-label">Focus time! Stay off your phone 📵</div>
+
+    <div class="pomo-btns">
+      <button class="pomo-btn" onclick="startTimer()">▶ Start</button>
+      <button class="pomo-btn" onclick="pauseTimer()">⏸ Pause</button>
+      <button class="pomo-btn" onclick="resetTimer()">🔄 Reset</button>
+    </div>
+
+    <div class="pomo-sessions">
+      🍅 Sessions completed today: <strong id="session-count">0</strong>
+    </div>
+  </div>
+</div>
+
+<script>
+const modes = { focus: 25*60, short: 5*60, long: 15*60 };
+const labels = {
+  focus: "Focus time! Stay off your phone 📵",
+  short: "Short break! Stretch a little 🧘",
+  long: "Long break! Grab some water 💧"
+};
+
+let currentMode = 'focus';
+let timeLeft = modes.focus;
+let timer = null;
+let endTime = null;
+let sessions = parseInt(localStorage.getItem('pomo-sessions') || '0');
+
+document.getElementById('session-count').textContent = sessions;
+
+function setMode(mode) {
+  clearInterval(timer);
+  timer = null;
+
+  endTime = null;
+  localStorage.removeItem("breakEndTime");
+
+  currentMode = mode;
+  timeLeft = modes[mode];
+
+  localStorage.setItem("pomo-mode", mode);
+
+  updateDisplay();
+  document.getElementById('pomo-label').textContent = labels[mode];
+
+  document.querySelectorAll('.pomo-mode')
+    .forEach(b => b.classList.remove('active'));
+
+  event.target.classList.add('active');
+}
+
+function updateDisplay() {
+  const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+  const s = (timeLeft % 60).toString().padStart(2, '0');
+  document.getElementById('pomo-display').textContent = m + ':' + s;
+}
+
+function startTimer() {
+
+  if (timer) return;
+
+  if(currentMode !== "focus"){
+
+  if(!endTime){
+    endTime = Date.now() + timeLeft * 1000;
+
+    localStorage.setItem(
+      "breakEndTime",
+      endTime
+    );
+  }
+
+}
+
+  timer = setInterval(() => {
+
+    if(currentMode !== "focus"){
+
+  timeLeft = Math.max(
+    0,
+    Math.floor((endTime - Date.now()) / 1000)
+  );
+
+}else{
+
+  timeLeft--;
+
+}
+
+    updateDisplay();
+
+    if (timeLeft <= 0) {
+
+  clearInterval(timer);
+  timer = null;
+
+  localStorage.removeItem("breakEndTime");
+  endTime = null;
+
+      if (currentMode === 'focus') {
+        sessions++;
+        localStorage.setItem('pomo-sessions', sessions);
+        document.getElementById('session-count').textContent = sessions;
+        alert('🍅 Focus session done! Take a break.');
+      } else {
+        alert('Break over! Time to focus 💪');
+      }
+    }
+
+  }, 1000);
+}
+
+function pauseTimer() {
+  clearInterval(timer);
+  timer = null;
+
+  localStorage.removeItem("breakEndTime");
+  endTime = null;
+}
+
+function resetTimer() {
+  clearInterval(timer);
+  timer = null;
+
+  localStorage.removeItem("breakEndTime");
+  endTime = null;
+
+  timeLeft = modes[currentMode];
+  updateDisplay();
+}
+ 
+const savedMode =
+  localStorage.getItem("pomo-mode");
+
+if(savedMode){
+    currentMode = savedMode;
+}
+
+if(currentMode !== "focus"){
+
+    const end =
+      Number(localStorage.getItem("breakEndTime"));
+
+    if(end){
+
+        const remaining =
+          Math.floor((end - Date.now()) / 1000);
+
+        if(remaining > 0){
+            timeLeft = remaining;
+        }else{
+            timeLeft = modes[currentMode];
+            localStorage.removeItem("breakEndTime");
+        }
+    }
+}
+else{
+    timeLeft = modes.focus;
+}
+
+updateDisplay();
+document.getElementById('pomo-label').textContent =
+    labels[currentMode];
+</script>
+
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Report – Study Planner</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-link">📚 Planner</a>
+  <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+  <a href="timetable.html" class="nav-link">📅 Timetable</a>
+  <a href="pomodoro.html" class="nav-link">⏱️ Pomodoro</a>
+<a href="report.html" class="nav-link active">📄 My Report</a>
+</nav>
+
+<div class="container">
+
+  <div class="report-header">
+    <div>
+      <h1>📄 My Study Report</h1>
+      <p id="report-date" style="color:#888;font-size:14px;margin-top:4px"></p>
+    </div>
+    <button class="next-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
+  </div>
+
+  <!-- Overall Score -->
+  <div class="report-score-card">
+    <div class="score-circle" id="score-circle">0%</div>
+    <div class="score-info">
+      <div class="score-title" id="score-title">Calculating...</div>
+      <div class="score-msg" id="score-msg"></div>
+      <div class="score-badges" id="score-badges"></div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-grid" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-label">Total Subjects</div><div class="stat-value" id="r-subjects">0</div></div>
+    <div class="stat-card"><div class="stat-label">Topics Completed</div><div class="stat-value" id="r-done">0</div></div>
+    <div class="stat-card"><div class="stat-label">Topics Pending</div><div class="stat-value" id="r-pending">0</div></div>
+    <div class="stat-card"><div class="stat-label">Pomodoro Sessions</div><div class="stat-value" id="r-pomo">0</div></div>
+  </div>
+
+  <!-- Subject Breakdown -->
+  <div class="report-section">
+    <div class="report-section-title">📚 Subject Breakdown</div>
+    <div id="subject-breakdown"></div>
+  </div>
+
+  <!-- Exam Urgency -->
+  <div class="report-section">
+    <div class="report-section-title">🔔 Exam Urgency</div>
+    <div id="exam-urgency"></div>
+  </div>
+
+  <!-- Chart -->
+  <div class="report-section">
+    <div class="report-section-title">📊 Progress Chart</div>
+    <canvas id="reportChart" style="max-height:250px"></canvas>
+  </div>
+
+  <!-- AI Recommendations -->
+  <div class="report-section">
+    <div class="report-section-title">💡 Recommendations</div>
+    <div id="recommendations"></div>
+  </div>
+
+  <!-- Timetable Summary -->
+  <div class="report-section">
+    <div class="report-section-title">📅 Timetable Summary</div>
+    <div id="timetable-summary"></div>
+  </div>
+
+</div>
+
+<style>
+  .report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .report-score-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .score-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: conic-gradient(#4f8ef7 0%, #f0f0f0 0%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a2e;
+    flex-shrink: 0;
+    transition: background 1s;
+  }
+
+  .score-info { flex: 1; }
+  .score-title { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .score-msg { font-size: 14px; color: #666; margin-bottom: 12px; }
+  .score-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+  .score-badge { padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+
+  .report-section {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+  }
+
+  .report-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .subj-report-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f8f8;
+  }
+
+  .subj-report-name { font-size: 14px; font-weight: 600; color: #1a1a2e; flex: 1; }
+  .subj-report-pct { font-size: 13px; color: #888; min-width: 50px; text-align: right; }
+
+  .subj-report-bar { flex: 2; height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+  .subj-report-fill { height: 100%; border-radius: 4px; background: #4f8ef7; transition: width 1s; }
+
+  .urgency-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+
+  .rec-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f8f8;
+    font-size: 14px;
+    color: #444;
+    line-height: 1.5;
+  }
+
+  .rec-icon { font-size: 20px; flex-shrink: 0; }
+
+  .tt-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #555;
+    border-bottom: 1px solid #f8f8f8;
+  }
+
+  @media print {
+    .navbar, button { display: none !important; }
+    .container { margin: 0; padding: 0; }
+  }
+</style>
+
+<script>
+const subjects = JSON.parse(localStorage.getItem('subjects') || '[]');
+const timetable = JSON.parse(localStorage.getItem('timetable') || '[]');
+const pomoSessions = parseInt(localStorage.getItem('pomo-sessions') || '0');
+
+// Date
+document.getElementById('report-date').textContent =
+  'Generated on ' + new Date().toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+// Helper
+function daysLeft(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.ceil((new Date(dateStr) - today) / 86400000);
+}
+
+function pct(s) {
+  if (!s.topics.length) return 0;
+  return Math.round(s.topics.filter(t=>t.done).length / s.topics.length * 100);
+}
+
+// Stats
+const totalDone = subjects.reduce((a,s) => a + s.topics.filter(t=>t.done).length, 0);
+const totalPending = subjects.reduce((a,s) => a + s.topics.filter(t=>!t.done).length, 0);
+const totalTopics = totalDone + totalPending;
+const overallPct = totalTopics ? Math.round(totalDone / totalTopics * 100) : 0;
+
+document.getElementById('r-subjects').textContent = subjects.length;
+document.getElementById('r-done').textContent = totalDone;
+document.getElementById('r-pending').textContent = totalPending;
+document.getElementById('r-pomo').textContent = pomoSessions;
+
+// Score circle
+const circle = document.getElementById('score-circle');
+circle.textContent = overallPct + '%';
+circle.style.background = `conic-gradient(#4f8ef7 ${overallPct}%, #f0f0f0 0%)`;
+
+// Score title & message
+let scoreTitle, scoreMsg, badgesHtml;
+if (overallPct >= 80) {
+  scoreTitle = '🏆 Excellent Progress!';
+  scoreMsg = 'You are on top of your studies. Keep this momentum going!';
+  badgesHtml = '<span class="score-badge" style="background:#d4edda;color:#155724">🏆 Top Performer</span><span class="score-badge" style="background:#cce5ff;color:#004085">⭐ Consistent</span>';
+} else if (overallPct >= 60) {
+  scoreTitle = '👍 Good Progress';
+  scoreMsg = 'You are doing well but a few more topics to go. Stay focused!';
+  badgesHtml = '<span class="score-badge" style="background:#fff3cd;color:#856404">📈 On Track</span>';
+} else if (overallPct >= 40) {
+  scoreTitle = '⚠️ Needs Improvement';
+  scoreMsg = 'You have completed less than half your topics. Time to push harder!';
+  badgesHtml = '<span class="score-badge" style="background:#ffe0e0;color:#c0392b">⚠️ Behind Schedule</span>';
+} else if (subjects.length === 0) {
+  scoreTitle = '📭 No Data Yet';
+  scoreMsg = 'Go to the Planner and add your subjects and topics first!';
+  badgesHtml = '';
+} else {
+  scoreTitle = '🚨 Just Getting Started';
+  scoreMsg = 'You have a lot of topics pending. Start with the most urgent subject!';
+  badgesHtml = '<span class="score-badge" style="background:#ffe0e0;color:#c0392b">🚨 Urgent Action Needed</span>';
+}
+
+document.getElementById('score-title').textContent = scoreTitle;
+document.getElementById('score-msg').textContent = scoreMsg;
+document.getElementById('score-badges').innerHTML = badgesHtml;
+
+// Subject breakdown
+const breakdown = document.getElementById('subject-breakdown');
+if (!subjects.length) {
+  breakdown.innerHTML = '<div style="color:#aaa;font-size:14px">No subjects added yet.</div>';
+} else {
+  breakdown.innerHTML = subjects.map(s => {
+    const p = pct(s);
+    const done = s.topics.filter(t=>t.done).length;
+    return `
+      <div class="subj-report-row">
+        <div class="subj-report-name">${s.important ? '⭐ ' : ''}${s.name}</div>
+        <div class="subj-report-bar"><div class="subj-report-fill" style="width:${p}%"></div></div>
+        <div class="subj-report-pct">${done}/${s.topics.length} (${p}%)</div>
+      </div>`;
+  }).join('');
+}
+
+// Exam urgency
+const urgency = document.getElementById('exam-urgency');
+if (!subjects.length) {
+  urgency.innerHTML = '<div style="color:#aaa;font-size:14px">No exams added yet.</div>';
+} else {
+  const sorted = subjects.slice().sort((a,b) => daysLeft(a.examDate) - daysLeft(b.examDate));
+  urgency.innerHTML = sorted.map(s => {
+    const days = daysLeft(s.examDate);
+    let bg, color, icon;
+    if (days <= 5)       { bg='#ffe0e0'; color='#c0392b'; icon='🔴'; }
+    else if (days <= 10) { bg='#fff3cd'; color='#856404'; icon='🟡'; }
+    else                 { bg='#d4edda'; color='#155724'; icon='🟢'; }
+    return `
+      <div class="urgency-row" style="background:${bg};color:${color}">
+        <span>${icon} <strong>${s.name}</strong></span>
+        <span>${days} day${days!==1?'s':''} left</span>
+        <span>${pct(s)}% done</span>
+      </div>`;
+  }).join('');
+}
+
+// Chart
+new Chart(document.getElementById('reportChart'), {
+  type: 'bar',
+  data: {
+    labels: subjects.map(s => s.name),
+    datasets: [
+      { label: 'Done', data: subjects.map(s => s.topics.filter(t=>t.done).length), backgroundColor: '#4f8ef7' },
+      { label: 'Pending', data: subjects.map(s => s.topics.filter(t=>!t.done).length), backgroundColor: '#f0e0e0' }
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'top' } } }
+});
+
+// Recommendations — fully automatic
+const recs = [];
+const urgent = subjects.filter(s => daysLeft(s.examDate) <= 5 && pct(s) < 100);
+const behind = subjects.filter(s => pct(s) < 40);
+const notStarted = subjects.filter(s => pct(s) === 0);
+const almostDone = subjects.filter(s => pct(s) >= 80 && pct(s) < 100);
+
+if (urgent.length)     recs.push(['🚨', `<strong>${urgent.map(s=>s.name).join(', ')}</strong> ${urgent.length>1?'have':'has'} an exam in less than 5 days with incomplete topics. Prioritise immediately!`]);
+if (notStarted.length) recs.push(['📌', `You haven't started any topics in <strong>${notStarted.map(s=>s.name).join(', ')}</strong>. Open the planner and add topics now.`]);
+if (behind.length)     recs.push(['📈', `<strong>${behind.map(s=>s.name).join(', ')}</strong> ${behind.length>1?'are':'is'} less than 40% complete. Try studying these for at least 1 hour daily.`]);
+if (almostDone.length) recs.push(['🏁', `<strong>${almostDone.map(s=>s.name).join(', ')}</strong> ${almostDone.length>1?'are':'is'} almost done! Finish the remaining topics to complete them.`]);
+if (pomoSessions === 0) recs.push(['⏱️', 'You haven\'t used the Pomodoro timer yet. Try it — 25 minute focused sessions can dramatically boost your productivity.']);
+if (timetable.length === 0) recs.push(['📅', 'Your timetable is empty. Go to the Timetable page and schedule daily study slots for each subject.']);
+if (overallPct === 100 && subjects.length > 0) recs.push(['🏆', 'You have completed all topics! Now focus on revision and practice papers.']);
+if (!recs.length) recs.push(['✅', 'Everything looks good! Keep up the great work and stay consistent.']);
+
+document.getElementById('recommendations').innerHTML = recs.map(([icon, msg]) =>
+  `<div class="rec-row"><div class="rec-icon">${icon}</div><div>${msg}</div></div>`
+).join('');
+
+// Timetable summary
+const ttSummary = document.getElementById('timetable-summary');
+if (!timetable.length) {
+  ttSummary.innerHTML = '<div style="color:#aaa;font-size:14px">No timetable slots added yet.</div>';
+} else {
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  ttSummary.innerHTML = days.map(day => {
+    const slots = timetable.filter(s => s.day === day);
+    if (!slots.length) return '';
+    return `<div class="tt-summary-row"><span><strong>${day}</strong></span><span>${slots.map(s => s.subjectName + ' at ' + s.time).join(', ')}</span></div>`;
+  }).join('');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Planner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<nav class="navbar">
+  <a href="index.html" class="nav-link active">📚 Planner</a>
+  <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+  <a href="timetable.html" class="nav-link">📅 Timetable</a>
+  <a href="pomodoro.html" class="nav-link">⏱️ Pomodoro</a>
+  <a href="report.html" class="nav-link">📄 My Report</a>
+</nav>
+  <div class="container">
+
+    <h1>📚 Study Planner</h1>
+
+    <!-- Add Subject Form -->
+    <div class="add-form">
+      <input type="text" id="subject-name" placeholder="Subject name (e.g. Mathematics)" />
+      <input type="date" id="exam-date" />
+      <button onclick="addSubject()">Add Subject</button>
+    </div>
+
+    <!-- Subject List -->
+    <div id="subject-list"></div>
+
+  </div>
+
+  <script src="script.js"></script>
+  <div id="quizModal" class="quiz-modal">
+  <div class="quiz-content">
+    <h2>Topic Quiz</h2>
+
+    <div id="quizQuestion"></div>
+
+    <div id="quizOptions"></div>
+
+    <button id="nextQuestionBtn" onclick="nextQuestion()">
+    Next
+</button>
+
+    <div id="quizResult"></div>
+    <button id="closeQuizBtn"
+        onclick="closeQuiz()"
+        style="display:none;">
+    Close
+</button>
+  </div>
+</div>
+</body>
+</html>

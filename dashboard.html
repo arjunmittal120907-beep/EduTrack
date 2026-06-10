@@ -1,0 +1,161 @@
+<!DOCTYPE html>`
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – Study Planner</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<div id="quizModal" class="quiz-modal">
+  <div class="quiz-content">
+
+    <h2>Topic Quiz</h2>
+
+    <div id="quizQuestion"></div>
+
+    <div id="quizOptions"></div>
+
+    <button id="nextQuestionBtn">
+      Next
+    </button>
+
+    <div id="quizResult"></div>
+
+  </div>
+</div>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-link">📚 Planner</a>
+  <a href="dashboard.html" class="nav-link active">📊 Dashboard</a>
+  <a href="timetable.html" class="nav-link">📅 Timetable</a>
+  <a href="pomodoro.html" class="nav-link">⏱️ Pomodoro</a>
+  <a href="report.html" class="nav-link">📄 My Report</a>
+</nav>
+
+<div class="container">
+  <h1>📊 Dashboard</h1>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Subjects</div>
+      <div class="stat-value" id="total-subjects">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Topics Done</div>
+      <div class="stat-value" id="topics-done">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Topics Pending</div>
+      <div class="stat-value" id="topics-pending">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Nearest Exam</div>
+      <div class="stat-value" id="nearest-exam">—</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Progress per Subject</h2>
+
+    <div class="chart-container">
+        <canvas id="progressChart"></canvas>
+    </div>
+</div>
+
+<div class="chart-card">
+    <h2>Topics Done vs Pending</h2>
+
+    <div class="chart-container">
+        <canvas id="doughnutChart"></canvas>
+    </div>
+</div>
+
+  <div id="reminder-box"></div>
+
+</div>
+
+<script>
+const subjects = JSON.parse(localStorage.getItem('subjects') || '[]');
+
+// Stats
+const totalSubjects = subjects.length;
+const totalDone = subjects.reduce((s,x) => s + x.topics.filter(t=>t.done).length, 0);
+const totalPending = subjects.reduce((s,x) => s + x.topics.filter(t=>!t.done).length, 0);
+
+document.getElementById('total-subjects').textContent = totalSubjects;
+document.getElementById('topics-done').textContent = totalDone;
+document.getElementById('topics-pending').textContent = totalPending;
+
+// Nearest exam
+function daysLeft(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  return Math.ceil((new Date(dateStr) - today) / 86400000);
+}
+
+if (subjects.length) {
+  const nearest = subjects.slice().sort((a,b) => daysLeft(a.examDate) - daysLeft(b.examDate))[0];
+  document.getElementById('nearest-exam').textContent = daysLeft(nearest.examDate) + 'd';
+}
+
+// Exam reminders
+const reminderBox = document.getElementById('reminder-box');
+subjects.forEach(s => {
+  const days = daysLeft(s.examDate);
+  if (days <= 5) {
+    reminderBox.innerHTML += `
+      <div class="reminder-card danger">
+        🔔 <strong>${s.name}</strong> exam is in <strong>${days} day${days!==1?'s':''}!</strong> Start revising now!
+      </div>`;
+  } else if (days <= 10) {
+    reminderBox.innerHTML += `
+      <div class="reminder-card warning">
+        ⚠️ <strong>${s.name}</strong> exam is in <strong>${days} days.</strong> Pick up the pace!
+      </div>`;
+  }
+});
+
+// Bar chart
+const labels = subjects.map(s => s.name);
+const doneData = subjects.map(s => s.topics.filter(t=>t.done).length);
+const pendingData = subjects.map(s => s.topics.filter(t=>!t.done).length);
+
+new Chart(document.getElementById('progressChart'), {
+  type: 'bar',
+  data: {
+    labels,
+    datasets: [
+      { label: 'Done', data: doneData, backgroundColor: '#4f8ef7' },
+      { label: 'Pending', data: pendingData, backgroundColor: '#f0f4f8' }
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'top' } } }
+});
+
+// Doughnut chart
+new Chart(document.getElementById('doughnutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: [
+      `Done (${totalDone})`,
+      `Pending (${totalPending})`
+    ],
+    datasets: [{
+      data: [totalDone, totalPending],
+      backgroundColor: ['#4f8ef7', '#f0f0f0']
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom'
+      }
+    }
+  }
+});
+</script>
+
+</body>
+</html>

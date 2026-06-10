@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Timetable – Study Planner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="index.html" class="nav-link">📚 Planner</a>
+  <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+  <a href="timetable.html" class="nav-link active">📅 Timetable</a>
+  <a href="pomodoro.html" class="nav-link">⏱️ Pomodoro</a>
+  <a href="report.html" class="nav-link">📄 My Report</a>
+</nav>
+
+<div class="container">
+  <h1>📅 Weekly Timetable</h1>
+
+  <div class="timetable-form">
+    <select id="tt-subject"></select>
+    <select id="tt-day">
+      <option>Monday</option>
+      <option>Tuesday</option>
+      <option>Wednesday</option>
+      <option>Thursday</option>
+      <option>Friday</option>
+      <option>Saturday</option>
+      <option>Sunday</option>
+    </select>
+    <input type="time" id="tt-time" />
+    <input type="text" id="tt-duration" placeholder="Duration (e.g. 1 hour)" />
+    <button onclick="addSlot()">Add Slot</button>
+  </div>
+
+  <div class="timetable-grid" id="timetable-grid"></div>
+</div>
+
+<script>
+const subjects = JSON.parse(localStorage.getItem('subjects') || '[]');
+let timetable = JSON.parse(localStorage.getItem('timetable') || '[]');
+
+const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+
+// Fill subject dropdown
+const sel = document.getElementById('tt-subject');
+subjects.forEach(s => {
+  const opt = document.createElement('option');
+  opt.value = s.id;
+  opt.textContent = s.name;
+  sel.appendChild(opt);
+});
+
+function addSlot() {
+  const subjectId = parseInt(document.getElementById('tt-subject').value);
+  const subject = subjects.find(s => s.id === subjectId);
+  const day = document.getElementById('tt-day').value;
+  const time = document.getElementById('tt-time').value;
+  const duration = document.getElementById('tt-duration').value.trim();
+
+  if (!subject || !day || !time || !duration) {
+    alert('Please fill all fields!');
+    return;
+  }
+
+  timetable.push({ id: Date.now(), subjectName: subject.name, day, time, duration });
+  localStorage.setItem('timetable', JSON.stringify(timetable));
+  renderTimetable();
+}
+
+function deleteSlot(id) {
+  timetable = timetable.filter(s => s.id !== id);
+  localStorage.setItem('timetable', JSON.stringify(timetable));
+  renderTimetable();
+}
+
+function renderTimetable() {
+  const grid = document.getElementById('timetable-grid');
+  grid.innerHTML = '';
+
+  days.forEach(day => {
+    const slots = timetable.filter(s => s.day === day);
+    const dayEl = document.createElement('div');
+    dayEl.className = 'tt-day-block';
+    dayEl.innerHTML = `
+      <div class="tt-day-title">${day}</div>
+      ${slots.length === 0
+        ? '<div class="tt-empty">No study slots</div>'
+        : slots.map(s => `
+          <div class="tt-slot">
+            <div>
+              <div class="tt-subject">${s.subjectName}</div>
+              <div class="tt-time">⏰ ${s.time} &nbsp;·&nbsp; ${s.duration}</div>
+            </div>
+            <button class="delete-btn" onclick="deleteSlot(${s.id})">✕</button>
+          </div>`).join('')}
+    `;
+    grid.appendChild(dayEl);
+  });
+}
+
+renderTimetable();
+</script>
+
+</body>
+</html>
