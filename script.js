@@ -1,4 +1,4 @@
-const GEMINI_API_KEY = "AQ.Ab8RN6Ko2X1HV_34sSBAp4aJvCTo_ue2Evy2OrijOLxEwP_fkA";
+const GEMINI_API_KEY = "AQ.Ab8RN6IlJVcxVirxYHfL0FPhIrhIXOAirI9lmQHZqphu5oPlsA";
 let subjects = JSON.parse(localStorage.getItem('subjects') || '[]');
 let quizQuestions = [];
 let currentQuizIndex = 0;
